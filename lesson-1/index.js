@@ -14,9 +14,10 @@ const optionArgs = program.opts();
 const DEFAULT_DEPTH = 4;
 
 function main(directory, depth = DEFAULT_DEPTH) {
-    function getFileTree(filePath, level = 0) {
-        const files = fs.readdirSync(filePath, { withFileTypes: true });
-        files.forEach((file, index) => {
+    async function getFileTree(filePath, level = 0) {
+        const files = await fs.promises.readdir(filePath, { withFileTypes: true });
+
+        for (const [index, file] of files.entries()) {
             // Получаем символ отступа в зависимости от вложенности
             let indentSymbol = '';
             for(let i = 0; i < level; i++) {
@@ -32,9 +33,9 @@ function main(directory, depth = DEFAULT_DEPTH) {
             // Рекурсивно вызываем функцию, если это директория
             if(file.isDirectory() && level < (depth - 1)) {
                 const pathValue = path.join(filePath, file.name);
-                getFileTree(pathValue, level + 1);
+                await getFileTree(pathValue, level + 1);
             }
-        });
+        }
     }
     
     getFileTree(directory);
