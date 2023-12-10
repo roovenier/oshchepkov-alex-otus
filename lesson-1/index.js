@@ -31,7 +31,8 @@ function main(directory, depth = DEFAULT_DEPTH) {
     
             // Рекурсивно вызываем функцию, если это директория
             if(file.isDirectory() && level < (depth - 1)) {
-                getFileTree(path.join(file.path, file.name), level + 1);
+                const pathValue = path.join(filePath, file.name);
+                getFileTree(pathValue, level + 1);
             }
         });
     }
