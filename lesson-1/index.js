@@ -1,9 +1,15 @@
 
 const fs = require('fs');
 const path = require('path');
+const { program } = require('commander');
 
-const directoryPath = process.argv[2];
-const depthValue = process.argv[4];
+program
+  .requiredOption('-p, --path <string>')
+  .option('-d, --depth <number>');
+
+program.parse();
+
+const optionArgs = program.opts();
 
 const DEFAULT_DEPTH = 4;
 
@@ -33,4 +39,4 @@ function main(directory, depth = DEFAULT_DEPTH) {
     getFileTree(directory);
 }
 
-main(directoryPath, depthValue)
+main(optionArgs.path, optionArgs.depth)
