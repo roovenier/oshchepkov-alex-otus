@@ -6,13 +6,23 @@ if(!fileName) {
     throw new Error('Please, provide file name');
 }
 
-const fileStream = fs.createReadStream(fileName);
+const fileStream = fs.createReadStream(fileName, {
+    highWaterMark: 10,
+});
 
 const resultObj = {};
 
+let resultBuffer = [];
+
 fileStream.on('data', (chunk) => {
+    resultBuffer.push(chunk);
+});
+
+fileStream.on('end', () => {
+    const resultString = Buffer.concat(resultBuffer).toString();
+
     // фильтруем строку от лишних знаков
-    const chunkString = chunk.toString().replaceAll(/,*\.*/g, '');
+    const chunkString = resultString.replaceAll(/,*\.*/g, '');
 
     // приводим строку к массиву
     const arr = chunkString.split('\n').join(' ').split(' ');
@@ -35,8 +45,6 @@ fileStream.on('data', (chunk) => {
 
         resultObj[item] = 1;
     })
-});
 
-fileStream.on('end', () => {
     console.log(Object.values(resultObj));
 })
