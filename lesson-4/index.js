@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { Transform } = require("stream");
 
 const fileName = process.argv[2];
 
@@ -12,14 +13,24 @@ const fileStream = fs.createReadStream(fileName, {
 
 const resultObj = {};
 
-let resultBuffer = [];
+class TransformStream extends Transform {
+    constructor() {
+        super({ objectMode: true });
+        this.words = [];
+    }
+    
+    _transform(chunk, encoding, callback) {
+        this.words.push(chunk);
+        callback();
+    }
+}
 
-fileStream.on('data', (chunk) => {
-    resultBuffer.push(chunk);
-});
+const transformStream = new TransformStream();
+
+fileStream.pipe(transformStream);
 
 fileStream.on('end', () => {
-    const resultString = Buffer.concat(resultBuffer).toString();
+    const resultString = Buffer.concat(transformStream.words).toString();
 
     // фильтруем строку от лишних знаков
     const chunkString = resultString.replaceAll(/,*\.*/g, '');
