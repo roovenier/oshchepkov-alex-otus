@@ -11,51 +11,38 @@ const fileStream = fs.createReadStream(fileName, {
     highWaterMark: 10,
 });
 
-const resultObj = {};
-
 class TransformStream extends Transform {
     constructor() {
         super({ objectMode: true });
         this.words = [];
+        this.resultObj = {};
     }
     
     _transform(chunk, encoding, callback) {
-        this.words.push(chunk);
+        const words = chunk.toString().replaceAll(/,*\.*/g, '').split(/[ \n]+/).filter((word) => word.match(/[a-zA-Z]+/));
+        this.words.push(...words);
         callback();
+    }
+
+    _flush() {
+        this.words.sort();
+
+        // наполняем результирующий объект
+        this.words.forEach((item) => {
+            const charQuantity = this.resultObj[item];
+
+            if(charQuantity) {
+                this.resultObj[item] = charQuantity + 1;
+                return;
+            }
+
+            this.resultObj[item] = 1;
+        });
+
+        console.log(Object.values(this.resultObj));
     }
 }
 
 const transformStream = new TransformStream();
 
 fileStream.pipe(transformStream);
-
-fileStream.on('end', () => {
-    const resultString = Buffer.concat(transformStream.words).toString();
-
-    // фильтруем строку от лишних знаков
-    const chunkString = resultString.replaceAll(/,*\.*/g, '');
-
-    // приводим строку к массиву
-    const arr = chunkString.split('\n').join(' ').split(' ');
-
-    // фильтруем массив, оставляя только текстовые символы
-    const regexChar = new RegExp('[a-zA-Z]', 'g');
-    const listOfChar = arr.filter((item) => item.match(regexChar));
-
-    // сортируем массив по алфавиту
-    listOfChar.sort();
-
-    // наполняем результирующий объект
-    listOfChar.forEach((item) => {
-        const charQuantity = resultObj[item];
-
-        if(charQuantity) {
-            resultObj[item] = charQuantity + 1
-            return;
-        }
-
-        resultObj[item] = 1;
-    })
-
-    console.log(Object.values(resultObj));
-})
